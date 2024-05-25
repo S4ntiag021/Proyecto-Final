@@ -8,6 +8,7 @@ mydb = mysql.connector.connect(
 )
 cursor = mydb.cursor()
 
+# CRUD para Clientes
 def crearCliente(id, nombre, apellido, contacto):
     query = "INSERT INTO Clientes (ID, Nombre, Apellido, Contacto) VALUES (%s, %s, %s, %s)"
     cursor.execute(query, (id, nombre, apellido, contacto))
@@ -36,7 +37,7 @@ def eliminarCliente(id):
     mydb.commit()
     print("Cliente eliminado exitosamente.")
 
-# Funciones CRUD para VehiculosCarga
+# CRUD para VehiculosCarga
 def crearVehiculoCarga(id, marca, capacidad_carga, disponible):
     query = "INSERT INTO VehiculosCarga (ID, Marca, CapacidadCarga, Disponible) VALUES (%s, %s, %s, %s)"
     cursor.execute(query, (id, marca, capacidad_carga, disponible))
@@ -65,7 +66,7 @@ def eliminarVehiculoCarga(id):
     mydb.commit()
     print("Vehículo eliminado exitosamente.")
 
-# Funciones CRUD para Alquileres
+# CRUD para Alquileres
 def crearAlquiler(id, id_cliente, id_vehiculo, ubicacion, fecha_inicio, fecha_fin, monto, estado):
     query = "INSERT INTO Alquileres (ID, IDCliente, IDVehiculo, Ubicacion, FechaInicio, FechaFin, Monto, Estado) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
     cursor.execute(query, (id, id_cliente, id_vehiculo, ubicacion, fecha_inicio, fecha_fin, monto, estado))
@@ -94,7 +95,7 @@ def eliminarAlquiler(id):
     mydb.commit()
     print("Alquiler eliminado exitosamente.")
 
-# Funciones CRUD para Mantenimiento
+# CRUD para Mantenimiento
 def crearMantenimiento(id, id_vehiculo, descripcion, fecha, costo):
     query = "INSERT INTO Mantenimiento (ID, IDVehiculo, Descripcion, Fecha, Costo) VALUES (%s, %s, %s, %s, %s)"
     cursor.execute(query, (id, id_vehiculo, descripcion, fecha, costo))
@@ -123,7 +124,7 @@ def eliminarMantenimiento(id):
     mydb.commit()
     print("Mantenimiento eliminado exitosamente.")
 
-# Funciones CRUD para Empleados
+# CRUD para Empleados
 def crearEmpleado(id, nombre, apellido, contacto, cargo):
     query = "INSERT INTO Empleados (ID, Nombre, Apellido, Contacto, Cargo) VALUES (%s, %s, %s, %s, %s)"
     cursor.execute(query, (id, nombre, apellido, contacto, cargo))
@@ -152,7 +153,7 @@ def eliminarEmpleado(id):
     mydb.commit()
     print("Empleado eliminado exitosamente.")
 
-# Funciones CRUD para Reservas
+# CRUD para Reservas
 def crearReserva(id, id_cliente, id_vehiculo, fecha_reserva, fecha_inicio, fecha_fin):
     query = "INSERT INTO Reservas (ID, IDCliente, IDVehiculo, FechaReserva, FechaInicio, FechaFin) VALUES (%s, %s, %s, %s, %s, %s)"
     cursor.execute(query, (id, id_cliente, id_vehiculo, fecha_reserva, fecha_inicio, fecha_fin))
@@ -181,7 +182,7 @@ def eliminarReserva(id):
     mydb.commit()
     print("Reserva eliminada exitosamente.")
 
-# Funciones CRUD para Devoluciones
+# CRUD para Devoluciones
 def crearDevolucion(id, id_alquiler, fecha_devolucion, monto_a_pagar, dano):
     query = "INSERT INTO Devoluciones (ID, IDAlquiler, FechaDevolucion, MontoAPagar, Daño) VALUES (%s, %s, %s, %s, %s)"
     cursor.execute(query, (id, id_alquiler, fecha_devolucion, monto_a_pagar, dano))
@@ -210,7 +211,7 @@ def eliminarDevolucion(id):
     mydb.commit()
     print("Devolución eliminada exitosamente.")
 
-# Funciones CRUD para Ingresos
+# CRUD para Ingresos
 def crearIngreso(id, fecha, monto, descripcion, id_alquiler):
     query = "INSERT INTO Ingresos (ID, Fecha, Monto, Descripcion, IDAlquiler) VALUES (%s, %s, %s, %s, %s)"
     cursor.execute(query, (id, fecha, monto, descripcion, id_alquiler))
@@ -239,7 +240,7 @@ def eliminarIngreso(id):
     mydb.commit()
     print("Ingreso eliminado exitosamente.")
 
-# Funciones CRUD para Egresos
+# CRUD para Egresos
 def crearEgreso(id, fecha, monto, descripcion, id_mantenimiento, id_empleado):
     query = "INSERT INTO Egresos (ID, Fecha, Monto, Descripcion, IDMantenimiento, IDEmpleado) VALUES (%s, %s, %s, %s, %s, %s)"
     cursor.execute(query, (id, fecha, monto, descripcion, id_mantenimiento, id_empleado))
@@ -268,7 +269,103 @@ def eliminarEgreso(id):
     mydb.commit()
     print("Egreso eliminado exitosamente.")
 
+# Consultas adicionales
+def vehiculosMasAlquilados():
+    query = """
+    SELECT V.ID, V.Marca, COUNT(A.IDVehiculo) AS TotalAlquileres
+    FROM Alquileres A
+    JOIN VehiculosCarga V ON A.IDVehiculo = V.ID
+    GROUP BY V.ID, V.Marca
+    ORDER BY TotalAlquileres DESC
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    print("Vehículos más alquilados:")
+    for row in resultados:
+        print(row)
+
+def ingresosPorVehiculoPorRangoFechas(fecha_inicio, fecha_fin):
+    query = """
+    SELECT V.ID, V.Marca, SUM(A.Monto) AS Ingresos
+    FROM Alquileres A
+    JOIN VehiculosCarga V ON A.IDVehiculo = V.ID
+    WHERE A.FechaInicio >= %s AND A.FechaFin <= %s
+    GROUP BY V.ID, V.Marca
+    """
+    cursor.execute(query, (fecha_inicio, fecha_fin))
+    resultados = cursor.fetchall()
+    print(f"Ingresos por vehículo del {fecha_inicio} al {fecha_fin}:")
+    for row in resultados:
+        print(row)
+
+def vehiculosDisponibles():
+    query = "SELECT * FROM VehiculosCarga WHERE Disponible = 1"
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    print("Vehículos disponibles:")
+    for row in resultados:
+        print(row)
+
+def vehiculosReservadosPorEntregar():
+    query = """
+    SELECT V.ID, V.Marca, R.FechaInicio, R.FechaFin
+    FROM Reservas R
+    JOIN VehiculosCarga V ON R.IDVehiculo = V.ID
+    WHERE R.FechaInicio > CURDATE()
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    print("Vehículos reservados por entregar:")
+    for row in resultados:
+        print(row)
+
+def clientesConMayorFacturacionPorFechas(fecha_inicio, fecha_fin):
+    query = """
+    SELECT C.ID, C.Nombre, C.Apellido, SUM(A.Monto) AS TotalFacturado
+    FROM Clientes C
+    JOIN Alquileres A ON C.ID = A.IDCliente
+    WHERE A.FechaInicio >= %s AND A.FechaFin <= %s
+    GROUP BY C.ID, C.Nombre, C.Apellido
+    ORDER BY TotalFacturado DESC
+    """
+    cursor.execute(query, (fecha_inicio, fecha_fin))
+    resultados = cursor.fetchall()
+    print(f"Clientes con mayor facturación del {fecha_inicio} al {fecha_fin}:")
+    for row in resultados:
+        print(row)
+
+def equiposPendientesPorMantenimiento():
+    query = """
+    SELECT V.ID, V.Marca, M.Descripcion, M.Fecha
+    FROM Mantenimiento M
+    JOIN VehiculosCarga V ON M.IDVehiculo = V.ID
+    WHERE M.Fecha > CURDATE()
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    print("Equipos pendientes por mantenimiento:")
+    for row in resultados:
+        print(row)
+
 # Frontend
+def menu_principal():
+    while True:
+        print("Seleccione una opción:")
+        print("1. Operaciones CRUD")
+        print("2. Consultas")
+        print("3. Salir")
+
+        opcion = input("Opción: ")
+
+        if opcion == "1":
+            menu_tablas()
+        elif opcion == "2":
+            menu_consultas()
+        elif opcion == "3":
+            break
+        else:
+            print("Opción no válida, intente de nuevo.")
+
 def menu_tablas():
     while True:
         print("Seleccione la tabla para la cual desea realizar operaciones:")
@@ -281,7 +378,7 @@ def menu_tablas():
         print("7. Devoluciones")
         print("8. Ingresos")
         print("9. Egresos")
-        print("10. Salir")
+        print("10. Volver al menú anterior")
 
         opcion_tabla = input("Opción: ")
 
@@ -397,7 +494,7 @@ def obtener_datos(tabla):
         datos.append(input("Ingrese ID alquiler: "))
         datos.append(input("Ingrese fecha de devolución (YYYY-MM-DD): "))
         datos.append(input("Ingrese monto a pagar: "))
-        datos.append(input("Ingrese daño (si lo hay): "))
+        datos.append(input("Ingrese daño (opcional): "))
     elif tabla == "Ingreso":
         datos.append(input("Ingrese ID ingreso: "))
         datos.append(input("Ingrese fecha (YYYY-MM-DD): "))
@@ -413,5 +510,39 @@ def obtener_datos(tabla):
         datos.append(input("Ingrese ID empleado (opcional): "))
     return datos
 
+def menu_consultas():
+    while True:
+        print("Seleccione la consulta que desea realizar:")
+        print("1. Vehículos más alquilados")
+        print("2. Ingresos por vehículo por rango de fechas")
+        print("3. Vehículos disponibles")
+        print("4. Vehículos reservados por entregar")
+        print("5. Clientes con mayor facturación por fechas")
+        print("6. Equipos pendientes por mantenimiento")
+        print("7. Volver al menú anterior")
+
+        opcion_consulta = input("Opción: ")
+
+        if opcion_consulta == "1":
+            vehiculosMasAlquilados()
+        elif opcion_consulta == "2":
+            fecha_inicio = input("Ingrese la fecha de inicio (YYYY-MM-DD): ")
+            fecha_fin = input("Ingrese la fecha de fin (YYYY-MM-DD): ")
+            ingresosPorVehiculoPorRangoFechas(fecha_inicio, fecha_fin)
+        elif opcion_consulta == "3":
+            vehiculosDisponibles()
+        elif opcion_consulta == "4":
+            vehiculosReservadosPorEntregar()
+        elif opcion_consulta == "5":
+            fecha_inicio = input("Ingrese la fecha de inicio (YYYY-MM-DD): ")
+            fecha_fin = input("Ingrese la fecha de fin (YYYY-MM-DD): ")
+            clientesConMayorFacturacionPorFechas(fecha_inicio, fecha_fin)
+        elif opcion_consulta == "6":
+            equiposPendientesPorMantenimiento()
+        elif opcion_consulta == "7":
+            break
+        else:
+            print("Opción no válida, intente de nuevo.")
+
 # Ejecutar el menú principal
-menu_tablas()
+menu_principal()
